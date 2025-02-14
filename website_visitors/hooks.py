@@ -83,7 +83,7 @@ app_license = "mit"
 # ------------
 
 # before_install = "website_visitors.install.before_install"
-# after_install = "website_visitors.install.after_install"
+after_install = "website_visitors.install.after_install"
 
 # Uninstallation
 # ------------

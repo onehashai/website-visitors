@@ -100,9 +100,9 @@
 
         if (useBeacon) {
             const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-            navigator.sendBeacon(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
+            navigator.sendBeacon(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
         } else {
-            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
+            fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
