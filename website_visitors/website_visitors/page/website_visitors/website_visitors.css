@@ -1,0 +1,12 @@
+#live-visitors-table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#live-visitors-table thead tr {
+    background-color: #dfe1e4;
+}
+
+#live-visitors-table tbody tr {
+    background-color: #f8f9fa;
+}

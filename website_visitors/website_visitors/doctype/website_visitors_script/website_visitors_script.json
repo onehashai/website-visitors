@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-02-06 11:49:07.625024",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "website_name",
+  "website_domain",
+  "website_token",
+  "api_endpoint",
+  "column_break_2ejn",
+  "script",
+  "webhook_details_section",
+  "example_request"
+ ],
+ "fields": [
+  {
+   "fieldname": "website_name",
+   "fieldtype": "Data",
+   "label": "Website Name"
+  },
+  {
+   "description": "(example: acme.com)",
+   "fieldname": "website_domain",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Website Domain",
+   "reqd": 1
+  },
+  {
+   "fieldname": "website_token",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Website Token"
+  },
+  {
+   "description": "Put the script inside body of your web page",
+   "fieldname": "script",
+   "fieldtype": "HTML",
+   "label": "Script"
+  },
+  {
+   "fieldname": "column_break_2ejn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "If you want to gather form data and send it to a middleman (e.g. Make, n8n etc) first and then create lead in the system.",
+   "fieldname": "api_endpoint",
+   "fieldtype": "Data",
+   "label": "API Endpoint"
+  },
+  {
+   "fieldname": "webhook_details_section",
+   "fieldtype": "Tab Break",
+   "label": "Webhook Details"
+  },
+  {
+   "default": "curl -X POST \"https://{domain}/api/method/website_visitors.website_visitors.doctype.api.create_lead_via_webhook\"      -H \"Content-Type: application/json\"      -H \"Authorization: token {api_key}:{api_secret}\"      -d '{\n           \"fingerprint\": {\n             \"visitorId\": \"\",\n             \"requestId\": \"\"\n           },\n           \"website_token\": \"\",\n           \"form_data\": {\n             \"name\": \"\",\n             \"email\": \"\",\n             \"lead_owner\": \"\",\n             \"mobile_no\": \"\",\n           }\n         }'",
+   "fieldname": "example_request",
+   "fieldtype": "Code",
+   "label": "Example Request",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-02-13 15:39:19.083525",
+ "modified_by": "Administrator",
+ "module": "Website Visitors",
+ "name": "Website Visitors Script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,7 +1,7 @@
 app_name = "website_visitors"
 app_title = "Website Visitors"
 app_publisher = "Rishabh Pandram"
-app_description = "Track Live Visitors on website"
+app_description = "Track live visitors on website"
 app_email = "rishabh@onehash.ai"
 app_license = "mit"
 
@@ -185,6 +185,7 @@ app_license = "mit"
 # 	"Task": "website_visitors.task.get_dashboard_data"
 # }
 
+boot_session = "website_visitors.website_visitors.doctype.api.fingerprint_api_key"
 # exempt linked doctypes from being automatically cancelled
 #
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]

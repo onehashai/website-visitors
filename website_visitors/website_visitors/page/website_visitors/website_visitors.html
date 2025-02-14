@@ -1,0 +1,28 @@
+<!-- jinja -->
+<div class="table-responsive">
+    <h4>Live Visitors</h4>
+    <table class="table" id="live-visitors-table">
+        <thead>
+            <tr class="active">
+                <th>Email</th>
+                <th>City</th>
+                <th>Country</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for visitor in visitors %}
+                {% if visitor.on_website %}
+                    <tr>
+                        <td>{{ visitor.email_id }}</td>
+                        <td>{{ visitor.city }}</td>
+                        <td>
+                            <img src="https://flagcdn.com/w40/{{ visitor.country_code|lower }}.png" width="20" height="15" style="margin-bottom: 5px;" alt="{{ visitor.country }}">
+                            {{ visitor.country }}
+                        </td>
+                    </tr>
+                {% endif %}
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
