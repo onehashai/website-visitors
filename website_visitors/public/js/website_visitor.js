@@ -11,7 +11,7 @@
         }
 
         try {
-            const FingerprintJS = await import(`https://fpjscdn.net/v3/${frappe.boot.fingerprint_api_key}`);
+            const FingerprintJS = await import('https://fpjscdn.net/v3/f4mouJmq9iqfBP6lH6O6');
             const fp = await FingerprintJS.load({ region: "ap" });
             const result = await fp.get({ extendedResult: true });
             visitorId = result.visitorId;

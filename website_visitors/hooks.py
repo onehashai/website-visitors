@@ -185,7 +185,7 @@ after_install = "website_visitors.install.after_install"
 # 	"Task": "website_visitors.task.get_dashboard_data"
 # }
 
-boot_session = "website_visitors.website_visitors.doctype.api.fingerprint_api_key"
+# boot_session = "website_visitors.website_visitors.doctype.api.fingerprint_api_key"
 # exempt linked doctypes from being automatically cancelled
 #
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]

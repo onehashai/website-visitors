@@ -4,9 +4,6 @@ import frappe
 from frappe.utils import validate_email_address
 from website_visitors.website_visitors.doctype.website_visitors_log.website_visitors_log import create_log
 
-def fingerprint_api_key(bootinfo):
-    bootinfo.fingerprint_api_key = frappe.conf.fingerprint_api_key
-
 def get_geolocation(request_id):
     url = f"https://ap.api.fpjs.io/events/{request_id}?api_key={frappe.conf.fingerprint_secret_key}"
     headers = {
