@@ -66,8 +66,8 @@ frappe.ui.form.on("Website Visitors Script", {
             method: "website_visitors.website_visitors.doctype.website_visitors_script.website_visitors_script.get_lead_fields",
             callback: function(r) {
                 if (r.message) {
-                    frm.fields_dict.lead_mapping.grid.update_docfield_property(
-                        "lead_field",
+                    frm.fields_dict.form_mapping.grid.update_docfield_property(
+                        "field_name",
                         "options",
                         r.message.join("\n")
                     )

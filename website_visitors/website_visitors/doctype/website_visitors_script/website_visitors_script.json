@@ -11,7 +11,8 @@
   "column_break_2ejn",
   "script",
   "section_break_wmux",
-  "lead_mapping",
+  "lead_owner",
+  "form_mapping",
   "mediator_tab",
   "api_endpoint",
   "webhook_details_section",
@@ -65,12 +66,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "lead_mapping",
-   "fieldtype": "Table",
-   "label": "Lead Mapping",
-   "options": "Website Visitors Lead Mapping"
-  },
-  {
    "fieldname": "mediator_tab",
    "fieldtype": "Tab Break",
    "label": "Mediator"
@@ -79,11 +74,23 @@
    "fieldname": "webhook_details_section",
    "fieldtype": "Section Break",
    "label": "Webhook Details"
+  },
+  {
+   "fieldname": "lead_owner",
+   "fieldtype": "Link",
+   "label": "Lead Owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "form_mapping",
+   "fieldtype": "Table",
+   "label": "Form Mapping",
+   "options": "Website Visitors Form Mapping"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-17 13:26:50.793586",
+ "modified": "2025-02-17 16:25:20.937812",
  "modified_by": "Administrator",
  "module": "Website Visitors",
  "name": "Website Visitors Script",
