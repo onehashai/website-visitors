@@ -7,12 +7,25 @@ def create_custom_fields():
         "label": "On Website",
         "fieldname": "on_website",
         "fieldtype": "Check",
-        "default_value": False,
+        "default": False,
         "hidden": True,
         "insert_after": "other_info_tab"
     })
     on_website.insert()
     on_website.save()
+
+    visit_count = frappe.get_doc({
+        "doctype": "Custom Field",
+        "dt": "Lead",
+        "label": "Visit Count",
+        "fieldname": "visit_count",
+        "fieldtype": "Int",
+        "default": 0,
+        "hidden": True,
+        "insert_after": "on_website"
+    })
+    visit_count.insert()
+    visit_count.save()
     
     visitor_details = frappe.get_doc({
         "doctype": "Custom Field",
@@ -21,7 +34,7 @@ def create_custom_fields():
         "fieldname": "visitor_details",
         "fieldtype": "JSON",
         "hidden": True,
-        "insert_after": "on_website"
+        "insert_after": "visit_count"
     })
     visitor_details.insert()
     visitor_details.save()

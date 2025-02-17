@@ -11,7 +11,7 @@
         }
 
         try {
-            const FingerprintJS = await import(`https://fpjscdn.net/v3/f4mouJmq9iqfBP6lH6O6`);
+            const FingerprintJS = await import(`https://fpjscdn.net/v3/${frappe.boot.fingerprint_api_key}`);
             const fp = await FingerprintJS.load({ region: "ap" });
             const result = await fp.get({ extendedResult: true });
             visitorId = result.visitorId;
@@ -58,7 +58,7 @@
         };
     
         try {
-            fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
+            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json" 
@@ -100,9 +100,9 @@
 
         if (useBeacon) {
             const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-            navigator.sendBeacon(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
+            navigator.sendBeacon(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
         } else {
-            fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
+            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -116,15 +116,10 @@
         const fingerprintData = await getFingerprint()
         const scriptSrc = await getScriptSrc()
         const { domain, websiteToken } = await extractDomainAndToken(scriptSrc);
-        sendUserActivityEvent(fingerprintData, domain, websiteToken, "On Website");
-
-        document.addEventListener("visibilitychange", function () {
-            if (document.hidden) {
-                sendUserActivityEvent(fingerprintData, domain, websiteToken, "Left Website");
-            } else {
-                sendUserActivityEvent(fingerprintData, domain, websiteToken, "On Website");
-            }
-        });
+        if (!sessionStorage.getItem("hasTrackedActivity")) {
+            sendUserActivityEvent(fingerprintData, domain, websiteToken, "On Website");
+            sessionStorage.setItem("hasTrackedActivity", "true");
+        }
 
         window.addEventListener("pagehide", function(e) {
             sendUserActivityEvent(fingerprintData, domain, websiteToken, "Left Website", useBeacon = true);

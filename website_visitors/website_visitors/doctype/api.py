@@ -1,10 +1,8 @@
 import requests
 import json
 import frappe
+from frappe.utils import validate_email_address
 from website_visitors.website_visitors.doctype.website_visitors_log.website_visitors_log import create_log
-
-frappe.utils.logger.set_log_level("DEBUG")
-logger = frappe.logger("api", allow_site=True, file_count=50)
 
 def fingerprint_api_key(bootinfo):
     bootinfo.fingerprint_api_key = frappe.conf.fingerprint_api_key
@@ -43,7 +41,10 @@ def create_lead_via_webhook():
         if not form_data:
             return {"status": "error", "message": "Missing form_data"}
         
-        email = form_data.get("email", "")
+        email = None
+        for key, value in form_data.items():
+            if validate_email_address(str(value)):
+                email = value
         if not email:
             return {"status": "error", "message": "email field in form is mandatory"}
         
@@ -51,25 +52,26 @@ def create_lead_via_webhook():
         if not script:
             return {"status": "error", "message": "No website visitors script doc found for website_token"}
 
-        create_lead(fingerprint, email, form_data)
+        create_lead(fingerprint, email, form_data, script.lead_mapping)
         return {"status": "success", "message": "Lead created successfully"}
     except Exception as e:
         frappe.log_error(f"Error: {e}")
         return {"status": "error", "message": str(e)}
 
-def create_lead(fingerprint, email, form_data):
+def create_lead(fingerprint, email, form_data, lead_mapping):
     visitor_id = fingerprint.get('visitorId', {})
     request_id = fingerprint.get('requestId', {})
     geolocation = get_geolocation(request_id)
+    lead_mapping_dict = {}
+    for row in lead_mapping:
+        lead_mapping_dict[row.name_attribute] = row.lead_field
 
     existing_lead = frappe.get_value("Lead", filters={'email_id': email})
     if existing_lead:
         lead = frappe.get_doc("Lead", existing_lead, ignore_permissions=True)
-        lead_meta = frappe.get_meta("Lead")
-        lead_fields = [df.fieldname for df in lead_meta.fields]
         for key,value in form_data.items():
-            if key in lead_fields:
-                setattr(lead, key, value)
+            if key in lead_mapping_dict:
+                setattr(lead, lead_mapping_dict[key], value)
         
         visitor_details = lead.visitor_details
         if isinstance(visitor_details, str):
@@ -87,13 +89,12 @@ def create_lead(fingerprint, email, form_data):
             "doctype": "Lead",
             "email_id": email,
         })
-        lead_meta = frappe.get_meta("Lead")
-        lead_fields = [df.fieldname for df in lead_meta.fields]
         for key,value in form_data.items():
-            if key in lead_fields:
-                setattr(lead, key, value)
+            if key in lead_mapping_dict:
+                setattr(lead, lead_mapping_dict[key], value)
 
         lead.on_website = True
+        lead.visit_count = 1
         visitor_details = {
             "geolocation": geolocation,
             "visitor_id": [visitor_id],
@@ -104,10 +105,12 @@ def create_lead(fingerprint, email, form_data):
 
 @frappe.whitelist(allow_guest=True)
 def handle_form_submission(fingerprint, website_token, form_data):
-    logger.info(f"{fingerprint} {website_token} {form_data}")
-    email = form_data.get('email', {})
+    email = None
+    for key, value in form_data.items():
+        if validate_email_address(str(value)):
+            email = value
     if not email:
-        frappe.log_error(f"email field in form is mandatory")
+        frappe.log_error(f"Email in form is mandatory")
     
     script = frappe.get_last_doc("Website Visitors Script", filters={'website_token': website_token})
     if not script:
@@ -129,12 +132,10 @@ def handle_form_submission(fingerprint, website_token, form_data):
         except requests.exceptions.RequestException as e:
             frappe.log_error(f"Error sending data to api endpoint: {e}")
     else:
-        create_lead(fingerprint, email, form_data)
+        create_lead(fingerprint, email, form_data, script.lead_mapping)
 
 @frappe.whitelist(allow_guest=True)
 def track_activity(fingerprint, website_token, event):
-    logger.info(f"{event} {website_token} {fingerprint}")
-
     script = frappe.get_last_doc("Website Visitors Script", filters={'website_token': website_token})
     if not script:
         frappe.log_error(f"No website visitors script doc found for website_token: {website_token}")
@@ -155,6 +156,7 @@ def track_activity(fingerprint, website_token, event):
 
         if event == "On Website":
             lead.on_website = True
+            lead.visit_count = lead.visit_count + 1
             geolocation = get_geolocation(request_id)
             visitor_details["geolocation"] = geolocation
             create_log(lead, geolocation)

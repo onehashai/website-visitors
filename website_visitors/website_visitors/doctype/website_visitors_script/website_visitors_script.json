@@ -8,9 +8,12 @@
   "website_name",
   "website_domain",
   "website_token",
-  "api_endpoint",
   "column_break_2ejn",
   "script",
+  "section_break_wmux",
+  "lead_mapping",
+  "mediator_tab",
+  "api_endpoint",
   "webhook_details_section",
   "example_request"
  ],
@@ -45,15 +48,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "If you want to gather form data and send it to a middleman (e.g. Make, n8n etc) first and then create lead in the system.",
+   "description": "If you want to gather form data and send it to a mediator (e.g. Make, n8n etc) first and then create lead in the system.",
    "fieldname": "api_endpoint",
    "fieldtype": "Data",
    "label": "API Endpoint"
-  },
-  {
-   "fieldname": "webhook_details_section",
-   "fieldtype": "Tab Break",
-   "label": "Webhook Details"
   },
   {
    "default": "curl -X POST \"https://{domain}/api/method/website_visitors.website_visitors.doctype.api.create_lead_via_webhook\"      -H \"Content-Type: application/json\"      -H \"Authorization: token {api_key}:{api_secret}\"      -d '{\n           \"fingerprint\": {\n             \"visitorId\": \"\",\n             \"requestId\": \"\"\n           },\n           \"website_token\": \"\",\n           \"form_data\": {\n             \"name\": \"\",\n             \"email\": \"\",\n             \"lead_owner\": \"\",\n             \"mobile_no\": \"\",\n           }\n         }'",
@@ -61,11 +59,31 @@
    "fieldtype": "Code",
    "label": "Example Request",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_wmux",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "lead_mapping",
+   "fieldtype": "Table",
+   "label": "Lead Mapping",
+   "options": "Website Visitors Lead Mapping"
+  },
+  {
+   "fieldname": "mediator_tab",
+   "fieldtype": "Tab Break",
+   "label": "Mediator"
+  },
+  {
+   "fieldname": "webhook_details_section",
+   "fieldtype": "Section Break",
+   "label": "Webhook Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-13 15:39:19.083525",
+ "modified": "2025-02-17 13:26:50.793586",
  "modified_by": "Administrator",
  "module": "Website Visitors",
  "name": "Website Visitors Script",

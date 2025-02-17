@@ -19,6 +19,7 @@ frappe.ui.form.on("Website Visitors Script", {
                                     var websiteToken = "${r.message.website_token}";
                                     var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
                                     g.src=BASE_URL+"/assets/website_visitors/js/website_visitor.js?token="+websiteToken;
+                                    g.defer = true;
                                     g.async = true;
                                     s.parentNode.insertBefore(g,s);
                                 })(document,"script");
@@ -57,6 +58,21 @@ frappe.ui.form.on("Website Visitors Script", {
             callback: function (r) {
                 frm.refresh()
             },
+        });
+    },
+
+    onload(frm){
+        frappe.call({
+            method: "website_visitors.website_visitors.doctype.website_visitors_script.website_visitors_script.get_lead_fields",
+            callback: function(r) {
+                if (r.message) {
+                    frm.fields_dict.lead_mapping.grid.update_docfield_property(
+                        "lead_field",
+                        "options",
+                        r.message.join("\n")
+                    )
+                }
+            }
         });
     }
 });

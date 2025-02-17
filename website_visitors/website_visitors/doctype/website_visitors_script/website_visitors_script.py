@@ -6,6 +6,11 @@ import uuid
 from frappe.model.document import Document
 
 @frappe.whitelist()
+def get_lead_fields():
+    fields = frappe.get_meta("Lead").fields
+    return [f.fieldname for f in fields if f.fieldname]
+
+@frappe.whitelist()
 def get_script_details(docname):
 	base_url = "https://" + frappe.local.site
 	website_token = frappe.db.get_value("Website Visitors Script", docname, "website_token")
