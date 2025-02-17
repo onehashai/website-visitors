@@ -49,28 +49,28 @@ def create_lead_via_webhook():
         if not script:
             return {"status": "error", "message": "No website visitors script doc found for website_token"}
 
-        create_lead(fingerprint, email, form_data, script.lead_mapping)
+        create_lead(fingerprint, email, form_data, script.form_mapping)
         return {"status": "success", "message": "Lead created successfully"}
     except Exception as e:
         frappe.log_error(f"Error: {e}")
         return {"status": "error", "message": str(e)}
 
-def create_lead(fingerprint, email, form_data, lead_mapping):
+def create_lead(fingerprint, email, form_data, form_mapping):
     visitor_id = fingerprint.get('visitorId', {})
     request_id = fingerprint.get('requestId', {})
     geolocation = get_geolocation(request_id)
-    lead_mapping_dict = {}
-    for row in lead_mapping:
-        lead_mapping_dict[row.name_attribute] = row.lead_field
+    form_mapping_dict = {}
+    for row in form_mapping:
+        form_mapping_dict[row.name_attribute] = row.field_name
 
     existing_lead = frappe.get_value("Lead", filters={'email_id': email})
     if existing_lead:
         lead = frappe.get_doc("Lead", existing_lead, ignore_permissions=True)
         for key,value in form_data.items():
-            if key in lead_mapping_dict:
-                setattr(lead, lead_mapping_dict[key], value)
+            if key in form_mapping_dict:
+                setattr(lead, form_mapping_dict[key], value)
 
-        lead.lead_owner = lead_mapping.lead_owner
+        lead.lead_owner = form_mapping.lead_owner
         visitor_details = lead.visitor_details
         if isinstance(visitor_details, str):
             visitor_details = json.loads(visitor_details)
@@ -88,10 +88,10 @@ def create_lead(fingerprint, email, form_data, lead_mapping):
             "email_id": email,
         })
         for key,value in form_data.items():
-            if key in lead_mapping_dict:
-                setattr(lead, lead_mapping_dict[key], value)
+            if key in form_mapping_dict:
+                setattr(lead, form_mapping_dict[key], value)
 
-        lead.lead_owner = lead_mapping.lead_owner
+        lead.lead_owner = form_mapping.lead_owner
         lead.on_website = True
         lead.visit_count = 1
         visitor_details = {
@@ -131,7 +131,7 @@ def handle_form_submission(fingerprint, website_token, form_data):
         except requests.exceptions.RequestException as e:
             frappe.log_error(f"Error sending data to api endpoint: {e}")
     else:
-        create_lead(fingerprint, email, form_data, script.lead_mapping)
+        create_lead(fingerprint, email, form_data, script.form_mapping)
 
 @frappe.whitelist(allow_guest=True)
 def track_activity(fingerprint, website_token, event):
