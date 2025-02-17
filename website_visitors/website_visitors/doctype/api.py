@@ -69,7 +69,8 @@ def create_lead(fingerprint, email, form_data, lead_mapping):
         for key,value in form_data.items():
             if key in lead_mapping_dict:
                 setattr(lead, lead_mapping_dict[key], value)
-        
+
+        lead.lead_owner = lead_mapping.lead_owner
         visitor_details = lead.visitor_details
         if isinstance(visitor_details, str):
             visitor_details = json.loads(visitor_details)
@@ -90,6 +91,7 @@ def create_lead(fingerprint, email, form_data, lead_mapping):
             if key in lead_mapping_dict:
                 setattr(lead, lead_mapping_dict[key], value)
 
+        lead.lead_owner = lead_mapping.lead_owner
         lead.on_website = True
         lead.visit_count = 1
         visitor_details = {
