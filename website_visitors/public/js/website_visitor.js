@@ -50,6 +50,17 @@
         return { domain, websiteToken };
     }
 
+    async function getSessionId() {
+        const cachedSessionId = sessionStorage.getItem("sessionId");
+        if (cachedSessionId){
+            return cachedSessionId;
+        }
+
+        const sessionId = crypto.randomUUID();
+        sessionStorage.setItem("sessionId", sessionId);
+        return sessionId;
+    }
+
     function sendFormData(fingerprint, domain, websiteToken, formData) {
         const payload = {
             fingerprint: fingerprint,
@@ -58,7 +69,7 @@
         };
     
         try {
-            fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
+            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json" 
@@ -85,24 +96,27 @@
                 const fingerprint = await getFingerprint()
                 const scriptSrc = await getScriptSrc()
                 const { domain, websiteToken } = await extractDomainAndToken(scriptSrc);
+
                 sendFormData(fingerprint, domain, websiteToken, formDataObj);
-                form.submit();  // Continue normal form submission after capturing email
+                form.submit();  // Continue normal form submission
             });
         })
     }
 
-    function sendUserActivityEvent(fingerprintData, domain, websiteToken, eventType, useBeacon = false) {
+    function sendUserActivityEvent(fingerprintData, domain, websiteToken, sessionId, pageInfo, eventType, useBeacon = false) {
         const payload = {
             fingerprint: fingerprintData,
             website_token: websiteToken,
+            session_id: sessionId,
+            page_info: pageInfo,
             event: eventType
         };
 
         if (useBeacon) {
             const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-            navigator.sendBeacon(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
+            navigator.sendBeacon(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
         } else {
-            fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
+            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -116,19 +130,72 @@
         const fingerprintData = await getFingerprint()
         const scriptSrc = await getScriptSrc()
         const { domain, websiteToken } = await extractDomainAndToken(scriptSrc);
-        if (!sessionStorage.getItem("hasTrackedActivity")) {
-            sendUserActivityEvent(fingerprintData, domain, websiteToken, "On Website");
-            sessionStorage.setItem("hasTrackedActivity", "true");
+        const sessionId = await getSessionId();
+
+        let pageUrl = window.location.href;
+        let pageOpenTime = new Date().toISOString();
+        let hasExitedPage = false;
+        let isNavigating = false;
+        let debounceTimeout = null;
+
+        function sendPageVisitEvent(eventType, pageCloseTime = null) {
+            const pageInfo = {
+                page_url: pageUrl,
+                page_open_time: pageOpenTime,
+                ...(pageCloseTime ? { page_close_time: pageCloseTime } : {})
+            };
+            sendUserActivityEvent(fingerprintData, domain, websiteToken, sessionId, pageInfo, eventType);
+        }
+        
+        // Tracks initial page load
+        sendPageVisitEvent("On Website Page");
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "hidden" && !hasExitedPage && !isNavigating) {
+                hasExitedPage = true;
+                sendPageVisitEvent("Left Website Page", new Date().toISOString());
+            } else if (document.visibilityState === "visible") {
+                hasExitedPage = false;
+                sendPageVisitEvent("On Website Page");
+            }
+        });
+
+        function handlePageChange(newUrl) {
+            if (newUrl !== pageUrl) {
+                if (!hasExitedPage) {
+                    isNavigating = true;
+                    sendPageVisitEvent("Left Website Page", new Date().toISOString());
+                }
+    
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => {
+                    pageUrl = newUrl;
+                    pageOpenTime = new Date().toISOString();
+                    hasExitedPage = false;
+                    isNavigating = false;
+                    sendPageVisitEvent("On Website Page");
+                }, 200); // Delay to prevent instant double logging
+            }
         }
 
-        window.addEventListener("pagehide", function(e) {
-            sendUserActivityEvent(fingerprintData, domain, websiteToken, "Left Website", useBeacon = true);
+        // Detect back/forward navigation
+        window.addEventListener("popstate", function () {
+            handlePageChange(window.location.href);
+        });
+
+        // Detect link clicks
+        document.addEventListener("click", function (event) {
+            const target = event.target.closest("a");
+            if (target && target.href && target.origin === window.location.origin) {
+                handlePageChange(target.href);
+            }
         });
     }
 
     document.addEventListener("DOMContentLoaded", async function() {
         await getFingerprint();
         await getScriptSrc();
+        await getSessionId();
         onFormSubmit()
         trackUserActivity();
     });

@@ -2,25 +2,7 @@ import requests
 import json
 import frappe
 from frappe.utils import validate_email_address
-from website_visitors.website_visitors.doctype.website_visitors_log.website_visitors_log import create_log
-
-def get_geolocation(request_id):
-    url = f"https://ap.api.fpjs.io/events/{request_id}?api_key={frappe.conf.fingerprint_secret_key}"
-    headers = {
-        "Accept": "application/json"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            geolocation = data.get("products", {}).get("ipInfo", {}).get("data", {}).get("v4", {}).get("geolocation", {})
-            return geolocation
-        else:
-            frappe.log_error(f"Error fetching geolocation for request_id {request_id}: {response.status_code}")
-            return None
-    except Exception as e:
-        frappe.log_error(f"Error: {e}")
-        return None
+from website_visitors.website_visitors.doctype.website_visitors_log.website_visitors_log import create_log, get_geolocation
 
 @frappe.whitelist()
 def create_lead_via_webhook():
@@ -101,10 +83,8 @@ def create_lead(fingerprint, email, form_data, script):
         lead.visitor_details = visitor_details
         lead.save(ignore_permissions=True)
     frappe.db.commit()
-    create_log(lead, geolocation)
 
-@frappe.whitelist(allow_guest=True)
-def handle_form_submission(fingerprint, website_token, form_data):
+def save_form_submission(fingerprint=None, website_token=None, form_data=None):
     email = None
     for key, value in form_data.items():
         if validate_email_address(str(value)):
@@ -135,7 +115,17 @@ def handle_form_submission(fingerprint, website_token, form_data):
         create_lead(fingerprint, email, form_data, script)
 
 @frappe.whitelist(allow_guest=True)
-def track_activity(fingerprint, website_token, event):
+def handle_form_submission(fingerprint, website_token, form_data):
+    frappe.enqueue(
+        method="website_visitors.website_visitors.doctype.api.save_form_submission",
+        queue="default",
+        is_async=True,
+        fingerprint=fingerprint,
+        website_token=website_token,
+        form_data=form_data
+    )
+
+def save_activity(fingerprint=None, website_token=None, session_id=None, page_info=None, event=None):
     script = frappe.get_last_doc("Website Visitors Script", filters={'website_token': website_token})
     if not script:
         frappe.log_error(f"No website visitors script doc found for website_token: {website_token}")
@@ -149,19 +139,24 @@ def track_activity(fingerprint, website_token, event):
     )
 
     if lead:
-        visitor_details = lead.visitor_details or {}
+        if event == "On Website Page":
+            frappe.db.set_value("Lead", lead.name, "on_website", 1, update_modified=False)
+        else:
+            frappe.db.set_value("Lead", lead.name, "on_website", 0, update_modified=False)
+        frappe.db.commit()
+        if "page_close_time" in page_info and page_info["page_close_time"]:
+            create_log(lead, request_id, session_id, page_info)
 
-        if isinstance(visitor_details, str):
-            visitor_details = json.loads(visitor_details)
-
-        if event == "On Website":
-            lead.on_website = True
-            lead.visit_count = lead.visit_count + 1
-            geolocation = get_geolocation(request_id)
-            visitor_details["geolocation"] = geolocation
-            create_log(lead, geolocation)
-        else :
-            lead.on_website = False
-
-        lead.save(ignore_permissions=True, ignore_version=True)
-        
+@frappe.whitelist(allow_guest=True)
+def track_activity(fingerprint, website_token, session_id, page_info, event):
+    frappe.enqueue(
+        method="website_visitors.website_visitors.doctype.api.save_activity",
+        queue="default",
+        is_async=True,
+        fingerprint=fingerprint,
+        website_token=website_token,
+        session_id=session_id,
+        page_info=page_info,
+        event=event
+    )
+    

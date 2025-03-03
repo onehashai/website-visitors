@@ -9,7 +9,10 @@
   "lead",
   "city",
   "country",
-  "visited_at"
+  "visited_at",
+  "session_id",
+  "session_history_tab",
+  "session_duration"
  ],
  "fields": [
   {
@@ -45,11 +48,28 @@
    "fieldtype": "Link",
    "label": "Lead",
    "options": "Lead"
+  },
+  {
+   "fieldname": "session_duration",
+   "fieldtype": "Table",
+   "label": "Session Duration",
+   "options": "Website Visitors Session Duration"
+  },
+  {
+   "fieldname": "session_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Session Id"
+  },
+  {
+   "fieldname": "session_history_tab",
+   "fieldtype": "Tab Break",
+   "label": "Session History"
   }
  ],
  "in_create": 1,
  "links": [],
- "modified": "2025-02-13 18:17:06.538641",
+ "modified": "2025-02-27 17:27:57.078886",
  "modified_by": "Administrator",
  "module": "Website Visitors",
  "name": "Website Visitors Log",
