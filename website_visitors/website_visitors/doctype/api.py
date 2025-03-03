@@ -92,7 +92,7 @@ def save_form_submission(fingerprint=None, website_token=None, form_data=None):
     if not email:
         frappe.log_error(f"Email in form is mandatory")
     
-    script = frappe.db.get_list("Website Visitors Script", filters={'website_token': website_token}, fields=['name', 'api_endpoint'])
+    script = frappe.db.get_list("Website Visitors Script", filters={'website_token': website_token}, fields=['name', 'api_endpoint'], ignore_permissions=True)
     if not script:
         frappe.log_error(f"No website visitors script doc found for website_token: {website_token}")
     
@@ -127,7 +127,7 @@ def handle_form_submission(fingerprint, website_token, form_data):
     )
 
 def save_activity(fingerprint=None, website_token=None, session_id=None, page_info=None, event=None):
-    script = frappe.get_last_doc("Website Visitors Script", filters={'website_token': website_token})
+    script = frappe.db.get_list("Website Visitors Script", filters={'website_token': website_token}, fields=['name', 'api_endpoint'], ignore_permissions=True)
     if not script:
         frappe.log_error(f"No website visitors script doc found for website_token: {website_token}")
 
