@@ -92,10 +92,11 @@ def save_form_submission(fingerprint=None, website_token=None, form_data=None):
     if not email:
         frappe.log_error(f"Email in form is mandatory")
     
-    script = frappe.get_last_doc("Website Visitors Script", filters={'website_token': website_token})
+    script = frappe.db.get_list("Website Visitors Script", filters={'website_token': website_token}, fields=['name', 'api_endpoint'])
     if not script:
         frappe.log_error(f"No website visitors script doc found for website_token: {website_token}")
     
+    script = script[0]
     if script.api_endpoint:
         payload = {
             "fingerprint": fingerprint,
