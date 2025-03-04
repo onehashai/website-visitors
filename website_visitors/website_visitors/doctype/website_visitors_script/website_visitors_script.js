@@ -27,21 +27,11 @@ frappe.ui.form.on("Website Visitors Script", {
                         </div>
                     `;
                     frm.set_df_property('script', 'options', htmlContent);
-                    frm.set_df_property('example_request', 'description', `Domain: ${r.message.base_url}. Go to User list->Settings->API Access for generating key and secret`);
                 }
             },
 
         });
 	},
-
-    validate: function (frm) {
-        let domainRegex = /^(?!www\.)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!domainRegex.test(frm.doc.website_domain)) {
-            frappe.msgprint(__("Please enter a valid domain (e.g., example.com)"));
-            frappe.validated = false;
-            return;
-        }
-    },
 
     before_save(frm) {
         if (frm.doc.website_domain) {

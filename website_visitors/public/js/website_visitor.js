@@ -69,7 +69,7 @@
         };
     
         try {
-            fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
+            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json" 
@@ -114,9 +114,9 @@
 
         if (useBeacon) {
             const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-            navigator.sendBeacon(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
+            navigator.sendBeacon(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
         } else {
-            fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
+            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

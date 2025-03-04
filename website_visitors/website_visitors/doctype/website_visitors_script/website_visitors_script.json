@@ -15,8 +15,7 @@
   "form_mapping",
   "mediator_tab",
   "api_endpoint",
-  "webhook_details_section",
-  "example_request"
+  "webhook_details_section"
  ],
  "fields": [
   {
@@ -25,9 +24,9 @@
    "label": "Website Name"
   },
   {
-   "description": "(example: acme.com)",
+   "description": "Use comma for multiple domains ( e.g. : acme.com, webflow.io ).",
    "fieldname": "website_domain",
-   "fieldtype": "Data",
+   "fieldtype": "Text",
    "in_list_view": 1,
    "label": "Website Domain",
    "reqd": 1
@@ -53,13 +52,6 @@
    "fieldname": "api_endpoint",
    "fieldtype": "Data",
    "label": "API Endpoint"
-  },
-  {
-   "default": "curl -X POST \"https://{domain}/api/method/website_visitors.website_visitors.doctype.api.create_lead_via_webhook\"      -H \"Content-Type: application/json\"      -H \"Authorization: token {api_key}:{api_secret}\"      -d '{\n           \"fingerprint\": {\n             \"visitorId\": \"\",\n             \"requestId\": \"\"\n           },\n           \"website_token\": \"\",\n           \"form_data\": {\n             \"name\": \"\",\n             \"email\": \"\",\n             \"lead_owner\": \"\",\n             \"mobile_no\": \"\",\n           }\n         }'",
-   "fieldname": "example_request",
-   "fieldtype": "Code",
-   "label": "Example Request",
-   "read_only": 1
   },
   {
    "fieldname": "section_break_wmux",
@@ -90,7 +82,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-17 16:25:20.937812",
+ "modified": "2025-03-04 12:43:26.821477",
  "modified_by": "Administrator",
  "module": "Website Visitors",
  "name": "Website Visitors Script",
