@@ -116,6 +116,9 @@ def save_activity(fingerprint=None, session_id=None, page_info=None, event=None,
     if "page_close_time" in page_info and page_info["page_close_time"]:
         create_log(lead, fingerprint, session_id, page_info)
 
+frappe.utils.logger.set_log_level("DEBUG")
+logger = frappe.logger("api", allow_site=True, file_count=50)
+
 @frappe.whitelist(allow_guest=True)
 def track_activity(telemetry_id, website_token, session_id, page_info, event):
     request = frappe.local.request
@@ -136,7 +139,9 @@ def track_activity(telemetry_id, website_token, session_id, page_info, event):
         return 
     
     fingerprint = get_fingerprint_details(telemetry_id.get("telemetryId", {}))
+    logger.info(fingerprint)
     visitor_id = fingerprint.get('fingerprints', {}).get('visitor_id',{})
+    logger.info(visitor_id)
     query = """
         SELECT * FROM `tabLead`
         WHERE JSON_UNQUOTE(JSON_EXTRACT(visitor_details, '$.fingerprints.visitor_id')) = %s
