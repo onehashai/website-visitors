@@ -115,12 +115,8 @@ def save_activity(fingerprint=None, session_id=None, page_info=None, event=None,
     if "page_close_time" in page_info and page_info["page_close_time"]:
         create_log(lead, fingerprint, session_id, page_info)
 
-frappe.utils.logger.set_log_level("DEBUG")
-logger = frappe.logger("api", allow_site=True, file_count=50)
-
 @frappe.whitelist(allow_guest=True)
 def track_activity(telemetry_id, website_token, session_id, page_info, event):
-    logger.info(f"{telemetry_id} {website_token} {session_id} {page_info} {event}")
     request = frappe.local.request
     referer = request.headers.get("Referer")
     origin = request.headers.get("Origin")
@@ -130,20 +126,15 @@ def track_activity(telemetry_id, website_token, session_id, page_info, event):
         domain = f"{extracted.domain}.{extracted.suffix}"
     else:
         domain = None
-    logger.info(domain)
     script = frappe.get_doc("Website Visitors Script", {"website_token": website_token})
-    logger.info(script)
     if not script:
         return
     allowed_domains = [d.strip() for d in script.website_domain.split(",")]
-    logger.info(allowed_domains)
     if domain is None or domain not in allowed_domains:
         return 
     
     fingerprint = get_fingerprint_details(telemetry_id.get("telemetryId", {}))
-    logger.info(fingerprint)
     visitor_id = fingerprint.get('fingerprints', {}).get('visitor_id',{})
-    logger.info(visitor_id)
     query = """
         SELECT * FROM `tabLead`
         WHERE JSON_UNQUOTE(JSON_EXTRACT(visitor_details, '$.fingerprints.visitor_id')) = %s
