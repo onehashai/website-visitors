@@ -121,6 +121,7 @@ logger = frappe.logger("api", allow_site=True, file_count=50)
 
 @frappe.whitelist(allow_guest=True)
 def track_activity(telemetry_id, website_token, session_id, page_info, event):
+    logger.info(f"{telemetry_id} {website_token} {session_id} {page_info} {event}")
     request = frappe.local.request
     referer = request.headers.get("Referer")
     origin = request.headers.get("Origin")
@@ -130,11 +131,13 @@ def track_activity(telemetry_id, website_token, session_id, page_info, event):
         domain = f"{extracted.domain}.{extracted.suffix}"
     else:
         domain = None
-
+    logger.info(domain)
     script = frappe.get_doc("Website Visitors Script", {"website_token": website_token})
+    logger.info(script)
     if not script:
         return
     allowed_domains = [d.strip() for d in script.website_domain.split(",")]
+    logger.info(allowed_domains)
     if domain is None or domain not in allowed_domains:
         return 
     
