@@ -28,13 +28,7 @@
 
         try {
             await loadTelemetryScript(); 
-            let publicToken;
-            if (window.location.hostname.includes('onehash.ai')) {
-                publicToken = "public-token-live-35bfd6db-3166-4326-a5a4-038c3deded01";
-            } else {
-                publicToken = "public-token-test-3a34af4d-9e61-4acb-920c-f3ef6e58918f";
-            }
-            
+            const publicToken = "public-token-test-3a34af4d-9e61-4acb-920c-f3ef6e58918f";
             const telemetryId = await GetTelemetryID({ publicToken });
             sessionStorage.setItem("telemetryId", telemetryId);
             return {
