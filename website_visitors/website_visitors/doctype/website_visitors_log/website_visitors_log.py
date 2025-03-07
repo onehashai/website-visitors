@@ -5,34 +5,9 @@ import frappe
 import requests
 import json
 from frappe.model.document import Document
-
-def get_geolocation(request_id):
-    url = f"https://ap.api.fpjs.io/events/{request_id}?api_key={frappe.conf.fingerprint_secret_key}"
-    headers = {
-        "Accept": "application/json"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            geolocation = data.get("products", {}).get("ipInfo", {}).get("data", {}).get("v4", {}).get("geolocation", {})
-            return geolocation
-        else:
-            frappe.log_error(f"Error fetching geolocation for request_id {request_id}: {response.status_code}")
-            return None
-    except Exception as e:
-        frappe.log_error(f"Error: {e}")
-        return None
 	
-def update_visitor_details(lead, geolocation):
-	visitor_details = lead.visitor_details or {}
-
-	if isinstance(visitor_details, str):
-		visitor_details = json.loads(visitor_details)
-
-	visitor_details["geolocation"] = geolocation
-	# Convert back to JSON string before storing
-	visitor_details_json = json.dumps(visitor_details)
+def update_visitor_details(lead, fingerprint):
+	visitor_details_json = json.dumps(fingerprint)
 
 	frappe.db.set_value("Lead", lead.name, {
         "visit_count": lead.visit_count + 1,
@@ -53,22 +28,25 @@ def create_new_entry_in_child_table(log, page_info):
 	log.save(ignore_permissions=True, ignore_version=True)
 
 @frappe.whitelist()
-def create_log(lead, request_id, session_id, page_info):
+def create_log(lead, fingerprint, session_id, page_info):
 	existing_log = frappe.get_value('Website Visitors Log',filters={'session_id': session_id})
 	if existing_log:
 		log = frappe.get_doc("Website Visitors Log", existing_log, ignore_permissions=True)
 		create_new_entry_in_child_table(log, page_info)
 	else:
-		geolocation = get_geolocation(request_id)
-		city = geolocation.get("city", {}).get("name", "N/A")
-		country = geolocation.get("country", {}).get("name", "N/A")
-		
+		ip = fingerprint.get("properties", {}).get("network_properties", {}).get("ip_address", {})
+		city = fingerprint.get("properties", {}).get("network_properties", {}).get("ip_geolocation", {}).get("city", {})
+		country = fingerprint.get("properties", {}).get("network_properties", {}).get("ip_geolocation", {}).get("country", {})
+		region = fingerprint.get("properties", {}).get("network_properties", {}).get("ip_geolocation", {}).get("region", {})
+
 		log = frappe.get_doc({
 			'doctype': 'Website Visitors Log',
 			'email_id': lead.email_id,
 			'lead': lead.name,
+			'ip': ip,
 			'city': city,
 			'country': country,
+			'region': region,
 			'session_id': session_id,
 			'visited_at': frappe.utils.now()
 		})
@@ -76,7 +54,7 @@ def create_log(lead, request_id, session_id, page_info):
 		frappe.db.commit()
 
 		create_new_entry_in_child_table(log, page_info)
-		update_visitor_details(lead, geolocation)
+		update_visitor_details(lead, fingerprint)
 
 class WebsiteVisitorsLog(Document):
 	@staticmethod

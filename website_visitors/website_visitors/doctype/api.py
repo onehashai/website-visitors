@@ -3,12 +3,26 @@ import json
 import frappe
 import tldextract
 from frappe.utils import validate_email_address
-from website_visitors.website_visitors.doctype.website_visitors_log.website_visitors_log import create_log, get_geolocation
+from website_visitors.website_visitors.doctype.website_visitors_log.website_visitors_log import create_log
+
+def get_fingerprint_details(telemetry_id):
+    url = f"https://telemetry.stytch.com/v1/fingerprint/lookup"
+    username = frappe.conf.stytch_project_id
+    password = frappe.conf.stytch_secret
+    headers = {
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "telemetry_id": telemetry_id
+    }
+    try:
+        response = requests.post(url, auth=(username, password), headers=headers, json=payload)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
 
 def create_lead(fingerprint, email, form_data, script):
-    visitor_id = fingerprint.get('visitorId', {})
-    request_id = fingerprint.get('requestId', {})
-    geolocation = get_geolocation(request_id)
     form_mapping_dict = {}
     for row in script.form_mapping:
         form_mapping_dict[row.name_attribute] = row.field_name
@@ -21,16 +35,7 @@ def create_lead(fingerprint, email, form_data, script):
                 setattr(lead, form_mapping_dict[key], value)
 
         lead.lead_owner = script.lead_owner
-        visitor_details = lead.visitor_details
-        if isinstance(visitor_details, str):
-            visitor_details = json.loads(visitor_details)
-    
-        visitor_ids = visitor_details.get("visitor_id", [])
-        if visitor_id not in visitor_ids:
-            visitor_ids.append(visitor_id)
-        visitor_details["visitor_id"] = visitor_ids
-
-        lead.visitor_details = visitor_details
+        lead.visitor_details = fingerprint
         lead.save(ignore_permissions=True)
     else:
         lead = frappe.get_doc({
@@ -44,11 +49,7 @@ def create_lead(fingerprint, email, form_data, script):
         lead.lead_owner = script.lead_owner
         lead.on_website = True
         lead.visit_count = 1
-        visitor_details = {
-            "geolocation": geolocation,
-            "visitor_id": [visitor_id],
-        }
-        lead.visitor_details = visitor_details
+        lead.visitor_details = fingerprint
         lead.save(ignore_permissions=True)
     frappe.db.commit()
 
@@ -78,7 +79,7 @@ def save_form_submission(fingerprint=None,form_data=None, script=None):
         create_lead(fingerprint, email, form_data, script)
 
 @frappe.whitelist(allow_guest=True)
-def handle_form_submission(fingerprint, website_token, form_data):
+def handle_form_submission(telemetry_id, website_token, form_data):
     request = frappe.local.request
     referer = request.headers.get("Referer")
     origin = request.headers.get("Origin")
@@ -96,6 +97,7 @@ def handle_form_submission(fingerprint, website_token, form_data):
     if domain is None or domain not in allowed_domains:
         return 
 
+    fingerprint = get_fingerprint_details(telemetry_id.get("telemetryId", {}))
     frappe.enqueue(
         method="website_visitors.website_visitors.doctype.api.save_form_submission",
         queue="default",
@@ -106,18 +108,16 @@ def handle_form_submission(fingerprint, website_token, form_data):
     )
 
 def save_activity(fingerprint=None, session_id=None, page_info=None, event=None, lead=None):
-    request_id = fingerprint.get('requestId', {})
-
     if event == "On Website Page":
         frappe.db.set_value("Lead", lead.name, "on_website", 1, update_modified=False)
     else:
         frappe.db.set_value("Lead", lead.name, "on_website", 0, update_modified=False)
     frappe.db.commit()
     if "page_close_time" in page_info and page_info["page_close_time"]:
-        create_log(lead, request_id, session_id, page_info)
+        create_log(lead, fingerprint, session_id, page_info)
 
 @frappe.whitelist(allow_guest=True)
-def track_activity(fingerprint, website_token, session_id, page_info, event):
+def track_activity(telemetry_id, website_token, session_id, page_info, event):
     request = frappe.local.request
     referer = request.headers.get("Referer")
     origin = request.headers.get("Origin")
@@ -135,12 +135,13 @@ def track_activity(fingerprint, website_token, session_id, page_info, event):
     if domain is None or domain not in allowed_domains:
         return 
     
-    visitor_id = fingerprint.get('visitorId', {})
-    lead = frappe.db.get_list(
-        "Lead",
-        filters={"visitor_details": ['like', f'%{visitor_id}%']},
-        fields=['*']
-    )
+    fingerprint = get_fingerprint_details(telemetry_id.get("telemetryId", {}))
+    visitor_id = fingerprint.get('fingerprints', {}).get('visitor_id',{})
+    query = """
+        SELECT * FROM `tabLead`
+        WHERE JSON_UNQUOTE(JSON_EXTRACT(visitor_details, '$.fingerprints.visitor_id')) = %s
+    """
+    lead = frappe.db.sql(query, (visitor_id,), as_dict=True)
     if not lead:
         return
     

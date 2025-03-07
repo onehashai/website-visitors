@@ -1,29 +1,47 @@
 (function() {
-    async function getFingerprint() {
-        const cachedVisitorId = sessionStorage.getItem("visitorId");
-        const cachedRequestId = sessionStorage.getItem("requestId");
+    function loadTelemetryScript() {
+        return new Promise((resolve, reject) => {
+            if (window.GetTelemetryID) {
+                // If already loaded, resolve immediately
+                resolve();
+                return;
+            }
+    
+            const script = document.createElement("script");
+            script.src = "https://elements.stytch.com/telemetry.js";
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error("Failed to load telemetry.js"));
+            
+            document.head.appendChild(script);
+        });
+    }
 
-        if (cachedVisitorId && cachedRequestId){
+    async function getTelemetryId() {
+        const cachedTelemetryId = sessionStorage.getItem("telemetryId");
+
+        if (cachedTelemetryId){
             return {
-                'visitorId': cachedVisitorId,
-                'requestId': cachedRequestId
+                'telemetryId': cachedTelemetryId,
             };
         }
 
         try {
-            const FingerprintJS = await import('https://fpjscdn.net/v3/f4mouJmq9iqfBP6lH6O6');
-            const fp = await FingerprintJS.load({ region: "ap" });
-            const result = await fp.get({ extendedResult: true });
-            visitorId = result.visitorId;
-            requestId = result.requestId;
-            sessionStorage.setItem("visitorId", visitorId);
-            sessionStorage.setItem("requestId", requestId);
+            await loadTelemetryScript(); 
+            let publicToken;
+            if (window.location.hostname.includes('onehash.ai')) {
+                publicToken = "public-token-live-35bfd6db-3166-4326-a5a4-038c3deded01";
+            } else {
+                publicToken = "public-token-test-3a34af4d-9e61-4acb-920c-f3ef6e58918f";
+            }
+            
+            const telemetryId = await GetTelemetryID({ publicToken });
+            sessionStorage.setItem("telemetryId", telemetryId);
             return {
-                'visitorId': visitorId,
-                'requestId': requestId
+                'telemetryId': telemetryId,
             }
         } catch (error) {
-            console.error("FingerprintJS error:", error);
+            console.error("Stytch error:", error);
         }
     }
 
@@ -61,9 +79,9 @@
         return sessionId;
     }
 
-    function sendFormData(fingerprint, domain, websiteToken, formData) {
+    function sendFormData(telemetryId, domain, websiteToken, formData) {
         const payload = {
-            fingerprint: fingerprint,
+            telemetry_id: telemetryId,
             website_token: websiteToken,
             form_data: formData,
         };
@@ -93,19 +111,19 @@
                     formDataObj[key] = value;
                 });
 
-                const fingerprint = await getFingerprint()
+                const telemetryId = await getTelemetryId()
                 const scriptSrc = await getScriptSrc()
                 const { domain, websiteToken } = await extractDomainAndToken(scriptSrc);
 
-                sendFormData(fingerprint, domain, websiteToken, formDataObj);
+                sendFormData(telemetryId, domain, websiteToken, formDataObj);
                 form.submit();  // Continue normal form submission
             });
         })
     }
 
-    function sendUserActivityEvent(fingerprintData, domain, websiteToken, sessionId, pageInfo, eventType, useBeacon = false) {
+    function sendUserActivityEvent(telemetryId, domain, websiteToken, sessionId, pageInfo, eventType, useBeacon = false) {
         const payload = {
-            fingerprint: fingerprintData,
+            telemetry_id: telemetryId,
             website_token: websiteToken,
             session_id: sessionId,
             page_info: pageInfo,
@@ -127,7 +145,7 @@
     }
 
     async function trackUserActivity() {
-        const fingerprintData = await getFingerprint()
+        const telemetryId = await getTelemetryId()
         const scriptSrc = await getScriptSrc()
         const { domain, websiteToken } = await extractDomainAndToken(scriptSrc);
         const sessionId = await getSessionId();
@@ -144,7 +162,7 @@
                 page_open_time: pageOpenTime,
                 ...(pageCloseTime ? { page_close_time: pageCloseTime } : {})
             };
-            sendUserActivityEvent(fingerprintData, domain, websiteToken, sessionId, pageInfo, eventType);
+            sendUserActivityEvent(telemetryId, domain, websiteToken, sessionId, pageInfo, eventType);
         }
         
         // Tracks initial page load
@@ -193,7 +211,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", async function() {
-        await getFingerprint();
+        await getTelemetryId();
         await getScriptSrc();
         await getSessionId();
         onFormSubmit()

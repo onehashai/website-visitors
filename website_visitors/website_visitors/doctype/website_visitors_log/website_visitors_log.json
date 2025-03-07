@@ -7,8 +7,10 @@
  "field_order": [
   "email_id",
   "lead",
+  "ip",
   "city",
   "country",
+  "region",
   "visited_at",
   "session_id",
   "session_history_tab",
@@ -65,11 +67,23 @@
    "fieldname": "session_history_tab",
    "fieldtype": "Tab Break",
    "label": "Session History"
+  },
+  {
+   "fieldname": "ip",
+   "fieldtype": "Data",
+   "label": "IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Data",
+   "label": "Region",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "links": [],
- "modified": "2025-02-27 17:27:57.078886",
+ "modified": "2025-03-07 21:14:03.582517",
  "modified_by": "Administrator",
  "module": "Website Visitors",
  "name": "Website Visitors Log",
