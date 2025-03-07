@@ -1,5 +1,4 @@
 import requests
-import json
 import frappe
 import tldextract
 from frappe.utils import validate_email_address
