@@ -27,6 +27,12 @@ def create_new_entry_in_child_table(log, page_info):
     })
 	log.save(ignore_permissions=True, ignore_version=True)
 
+def update_on_website(lead):
+	lead = frappe.get_doc("Lead", lead.name, ignore_permissions=True)
+	lead.on_website = 1
+	lead.save(ignore_permissions=True, ignore_version=True)
+	frappe.db.commit()
+
 @frappe.whitelist()
 def create_log(lead, fingerprint, session_id, page_info):
 	existing_log = frappe.get_value('Website Visitors Log',filters={'session_id': session_id})
@@ -54,6 +60,7 @@ def create_log(lead, fingerprint, session_id, page_info):
 		frappe.db.commit()
 
 		create_new_entry_in_child_table(log, page_info)
+		update_on_website(lead)
 		update_visitor_details(lead, fingerprint)
 
 class WebsiteVisitorsLog(Document):

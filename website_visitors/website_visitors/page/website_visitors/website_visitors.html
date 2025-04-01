@@ -6,6 +6,7 @@
             <tr class="active">
                 <th>Email</th>
                 <th>City</th>
+                <th>Region</th>
                 <th>Country</th>
             </tr>
         </thead>
@@ -15,8 +16,9 @@
                     <tr>
                         <td>{{ visitor.email_id }}</td>
                         <td>{{ visitor.city }}</td>
+                        <td>{{ visitor.region }}</td>
                         <td>
-                            <img src="https://flagcdn.com/w40/{{ visitor.country_code|lower }}.png" width="20" height="15" style="margin-bottom: 5px;" alt="{{ visitor.country }}">
+                            <img src="https://flagcdn.com/w40/{{ visitor.country|lower }}.png" width="20" height="15" style="margin-bottom: 5px;" alt="{{ visitor.country }}">
                             {{ visitor.country }}
                         </td>
                     </tr>

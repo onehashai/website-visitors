@@ -28,7 +28,7 @@
 
         try {
             await loadTelemetryScript(); 
-            const publicToken = "public-token-test-3a34af4d-9e61-4acb-920c-f3ef6e58918f";
+            const publicToken = "public-token-live-35bfd6db-3166-4326-a5a4-038c3deded01";
             const telemetryId = await GetTelemetryID({ publicToken });
             sessionStorage.setItem("telemetryId", telemetryId);
             return {
