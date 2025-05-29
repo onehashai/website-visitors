@@ -112,12 +112,8 @@ def save_activity(fingerprint=None, session_id=None, page_info=None, page_event=
     if "page_close_time" in page_info and page_info["page_close_time"]:
         create_log(lead, fingerprint, session_id, page_info)
 
-frappe.utils.logger.set_log_level("DEBUG")
-logger = frappe.logger("api", allow_site=True, file_count=50)
-
 @frappe.whitelist(allow_guest=True)
 def track_activity(telemetry_id, website_token, session_id, page_info, event):
-    logger.info(f"Telemetry ID: {telemetry_id}, Website Token: {website_token}, Session ID: {session_id}, Page Info: {page_info}, Event: {event}")
     request = frappe.local.request
     referer = request.headers.get("Referer")
     origin = request.headers.get("Origin")
