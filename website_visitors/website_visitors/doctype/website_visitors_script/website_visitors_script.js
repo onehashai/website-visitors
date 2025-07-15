@@ -17,6 +17,7 @@ frappe.ui.form.on("Website Visitors Script", {
                                 (function(d,t) {
                                     var BASE_URL="${r.message.base_url}";
                                     var websiteToken = "${r.message.website_token}";
+                                    var useMediator = ${r.message.use_mediator};
                                     var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
                                     g.src=BASE_URL+"/assets/website_visitors/js/website_visitor.js?token="+websiteToken;
                                     g.defer = true;

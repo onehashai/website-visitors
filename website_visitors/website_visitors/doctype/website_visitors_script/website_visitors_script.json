@@ -14,8 +14,7 @@
   "lead_owner",
   "form_mapping",
   "mediator_tab",
-  "api_endpoint",
-  "webhook_details_section"
+  "use_mediator"
  ],
  "fields": [
   {
@@ -48,12 +47,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "If you want to gather form data and send it to a mediator (e.g. Make, n8n etc) first and then create lead in the system.",
-   "fieldname": "api_endpoint",
-   "fieldtype": "Data",
-   "label": "API Endpoint"
-  },
-  {
    "fieldname": "section_break_wmux",
    "fieldtype": "Section Break"
   },
@@ -61,11 +54,6 @@
    "fieldname": "mediator_tab",
    "fieldtype": "Tab Break",
    "label": "Mediator"
-  },
-  {
-   "fieldname": "webhook_details_section",
-   "fieldtype": "Section Break",
-   "label": "Webhook Details"
   },
   {
    "fieldname": "lead_owner",
@@ -78,11 +66,18 @@
    "fieldtype": "Table",
    "label": "Form Mapping",
    "options": "Website Visitors Form Mapping"
+  },
+  {
+   "default": "0",
+   "description": "If your form is already submitting data to a mediator (such as n8n, Make, etc.), this option will append the user tracking ID to the form submission.",
+   "fieldname": "use_mediator",
+   "fieldtype": "Check",
+   "label": "Use Mediator"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-04 12:43:26.821477",
+ "modified": "2025-05-30 14:47:30.552150",
  "modified_by": "Administrator",
  "module": "Website Visitors",
  "name": "Website Visitors Script",
