@@ -6,13 +6,13 @@
                 resolve();
                 return;
             }
-    
+
             const script = document.createElement("script");
             script.src = "https://elements.stytch.com/telemetry.js";
             script.async = true;
             script.onload = () => resolve();
             script.onerror = () => reject(new Error("Failed to load telemetry.js"));
-            
+
             document.head.appendChild(script);
         });
     }
@@ -27,7 +27,7 @@
         }
 
         try {
-            await loadTelemetryScript(); 
+            await loadTelemetryScript();
             const publicToken = "public-token-live-35bfd6db-3166-4326-a5a4-038c3deded01";
             const telemetryId = await GetTelemetryID({ publicToken });
             sessionStorage.setItem("telemetryId", telemetryId);
@@ -40,12 +40,12 @@
     }
 
     async function getScriptSrc() {
-        cachedWebsiteVisitorSrc = sessionStorage.getItem("websiteVisitorSrc");
+        const cachedWebsiteVisitorSrc = sessionStorage.getItem("websiteVisitorSrc");
         if (cachedWebsiteVisitorSrc){
-            return cachedWebsiteVisitorSrc
+            return cachedWebsiteVisitorSrc;
         }
         const scripts = document.getElementsByTagName("script");
-        
+
         for (let script of scripts) {
             if (script.src.includes("website_visitor.js")) {
                 sessionStorage.setItem("websiteVisitorSrc", script.src);
@@ -73,19 +73,20 @@
         return sessionId;
     }
 
-    function sendFormData(telemetryId, domain, websiteToken, formData) {
+    async function sendFormData(telemetryId, domain, websiteToken, formData) {
         const payload = {
             telemetry_id: telemetryId,
             website_token: websiteToken,
             form_data: formData,
         };
-    
+
         try {
-            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
+            await fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.handle_form_submission`, {
                 method: "POST",
-                headers: { 
-                    "Content-Type": "application/json" 
+                headers: {
+                    "Content-Type": "application/json"
                 },
+                credentials: "omit",
                 body: JSON.stringify(payload),
             });
         } catch (error) {
@@ -105,20 +106,14 @@
                     formDataObj[key] = value;
                 });
 
-                const telemetryId = await getTelemetryId()
-                const scriptSrc = await getScriptSrc()
+                const telemetryId = await getTelemetryId();
+                const scriptSrc = await getScriptSrc();
                 const { domain, websiteToken } = await extractDomainAndToken(scriptSrc);
 
-                if (useMediator) {
-                    appendHiddenField(form, "telemetry_id", telemetryId);
-                    appendHiddenField(form, "website_token", websiteToken);
-                    form.submit();
-                } else {
-                    sendFormData(telemetryId, domain, websiteToken, formDataObj);
-                    form.submit();
-                }
+                await sendFormData(telemetryId, domain, websiteToken, formDataObj);
+                form.submit();
             });
-        })
+        });
     }
 
     function sendUserActivityEvent(telemetryId, domain, websiteToken, sessionId, pageInfo, eventType, useBeacon = false) {
@@ -130,23 +125,20 @@
             event: eventType
         };
 
-        if (useBeacon) {
-            const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-            navigator.sendBeacon(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, blob);
-        } else {
-            fetch(`http://t1.localhost/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            });
-        }
+        fetch(`https://${domain}/api/method/website_visitors.website_visitors.doctype.api.track_activity`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "omit",
+            keepalive: useBeacon,
+            body: JSON.stringify(payload)
+        });
     }
 
     async function trackUserActivity() {
-        const telemetryId = await getTelemetryId()
-        const scriptSrc = await getScriptSrc()
+        const telemetryId = await getTelemetryId();
+        const scriptSrc = await getScriptSrc();
         const { domain, websiteToken } = await extractDomainAndToken(scriptSrc);
         const sessionId = await getSessionId();
 
@@ -162,9 +154,10 @@
                 page_open_time: pageOpenTime,
                 ...(pageCloseTime ? { page_close_time: pageCloseTime } : {})
             };
-            sendUserActivityEvent(telemetryId, domain, websiteToken, sessionId, pageInfo, eventType);
+            const useBeacon = eventType === "Left Website Page";
+            sendUserActivityEvent(telemetryId, domain, websiteToken, sessionId, pageInfo, eventType, useBeacon);
         }
-        
+
         // Tracks initial page load
         sendPageVisitEvent("On Website Page");
 
@@ -184,7 +177,7 @@
                     isNavigating = true;
                     sendPageVisitEvent("Left Website Page", new Date().toISOString());
                 }
-    
+
                 clearTimeout(debounceTimeout);
                 debounceTimeout = setTimeout(() => {
                     pageUrl = newUrl;
@@ -210,11 +203,17 @@
         });
     }
 
-    document.addEventListener("DOMContentLoaded", async function() {
+    async function init() {
         await getTelemetryId();
         await getScriptSrc();
         await getSessionId();
-        onFormSubmit()
+        onFormSubmit();
         trackUserActivity();
-    });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
 })();
