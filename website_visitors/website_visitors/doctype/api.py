@@ -135,7 +135,9 @@ def track_activity(telemetry_id, website_token, session_id, page_info, event):
         return
 
     fingerprint = get_fingerprint_details(telemetry_id.get("telemetryId", {}))
-    visitor_id = fingerprint.get('fingerprints', {}).get('visitor_id', {})
+    visitor_id = fingerprint.get('fingerprints', {}).get('visitor_id', '')
+    if not visitor_id:
+        return
     query = """
         SELECT * FROM `tabLead`
         WHERE JSON_UNQUOTE(JSON_EXTRACT(visitor_details, '$.fingerprints.visitor_id')) = %s
